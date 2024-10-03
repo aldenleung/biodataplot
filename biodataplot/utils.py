@@ -116,6 +116,44 @@ def _plt_share_y_axes_20221007(axs, display_yticklabel='left'):
 			raise Exception()
 		for j in r:
 			axs[i][j].yaxis.set_tick_params(which='both', labelleft=False, labelright=False)
+			
+@vc
+def _plt_equal_xylim_20240901(ax=None):
+	'''
+	Make xlim and ylim equal based on the current xlim and ylim. 
+	
+	:Example:
+	
+	.. code-block:: python
+	
+		import matplotlib.pyplot as plt
+		
+		fig, axs = plt.subplots(1, 3)
+
+		axs[0].plot([1,2,3,4,5], [5,6,7,8,9])
+		axs[0].set_title("Original")
+		
+		axs[1].plot([1,2,3,4,5], [5,6,7,8,9])
+		pm.plt_equal_xylim(axs[1])
+		axs[1].set_title("Equal xylim")
+		
+		axs[2].plot([1,2,3,4,5], [5,6,7,8,9])
+		plt_equal_xylim(axs[2])
+		axs[2].set_title("Equal xylim and aspect")
+		axs[2].set_aspect("equal")
+		
+		fig.tight_layout()
+		
+
+	'''
+	import matplotlib.pyplot as plt
+	
+	if ax is None:
+		ax = plt.gca()
+	minimum = min(*ax.get_xlim(), *ax.get_ylim())
+	maximum = max(*ax.get_xlim(), *ax.get_ylim())
+	ax.set_xlim(minimum,maximum)
+	ax.set_ylim(minimum,maximum)
 
 @vc
 def _plt_register_asym_scale_20230101():
@@ -370,7 +408,7 @@ def _plt_change_ax_properties_20240501(ax, *,
 		ax.spines[s].set(**d)		
 		
 @vc
-def _plt_change_figure_properties_20240501(fig, *, fig_prop={}, fig_suptitle=None, fig_suptitle_kwargs={}, fig_supxlabel=None, fig_supxlabel_kwargs={}, fig_supylabel=None, fig_supylabel_kwargs={}, ax_targets=None, ax_prop={}, xticklabels_prop={}, yticklabels_prop={}, xlabel_prop={}, ylabel_prop={}, title_prop={}, legend_prop={}, legend_text_prop={}, text_prop={}, locator_prop={}, additional_axhlines=[], additional_axvlines=[], additional_axlines=[], additional_texts=[], adjust_text_positions_prop=None, spines_prop_dict={}, additional_texts_transAxes=False):
+def _plt_change_figure_properties_20240501(fig, *, fig_prop={}, fig_suptitle=None, fig_suptitle_kwargs={}, fig_supxlabel=None, fig_supxlabel_prop={}, fig_supylabel=None, fig_supylabel_prop={}, ax_targets=None, ax_prop={}, xticklabels_prop={}, yticklabels_prop={}, xlabel_prop={}, ylabel_prop={}, title_prop={}, legend_prop={}, legend_text_prop={}, text_prop={}, locator_prop={}, additional_axhlines=[], additional_axvlines=[], additional_axlines=[], additional_texts=[], adjust_text_positions_prop=None, spines_prop_dict={}, additional_texts_transAxes=False):
 	'''
 	Provide a way to apply different properties across to the matplotlib figure including changes to the selected axs
 	'''
@@ -389,13 +427,13 @@ def _plt_change_figure_properties_20240501(fig, *, fig_prop={}, fig_suptitle=Non
 	elif fig._suptitle is not None:
 		fig._suptitle.set(**fig_suptitle_kwargs)
 	if fig_supxlabel is not None:
-		fig.supxlabel(fig_supxlabel, **fig_supxlabel_kwargs)
+		fig.supxlabel(fig_supxlabel, **fig_supxlabel_prop)
 	elif fig._supxlabel is not None:
-		fig._supxlabel.set(**fig_supxlabel_kwargs)
+		fig._supxlabel.set(**fig_supxlabel_prop)
 	if fig_supylabel is not None:
-		fig.supylabel(fig_supylabel, **fig_supylabel_kwargs)
+		fig.supylabel(fig_supylabel, **fig_supylabel_prop)
 	elif fig._supylabel is not None:
-		fig._supylabel.set(**fig_supylabel_kwargs)
+		fig._supylabel.set(**fig_supylabel_prop)
 		
 @vc		
 def _compose_SVG_panel_20221231(data, w=None, h=None, cols=None, rows=None, output=None, save_fig_kw={}, text_kw={}, text_height=12):
@@ -523,3 +561,12 @@ def _compose_SVG_panel_20221231(data, w=None, h=None, cols=None, rows=None, outp
 	for filename in tmp_svgfiles:
 		os.unlink(filename)
 	return figure		
+
+
+
+
+
+
+
+
+	

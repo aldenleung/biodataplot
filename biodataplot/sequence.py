@@ -2,7 +2,7 @@ import sys
 import simplevc
 simplevc.register(sys.modules[__name__])
 
-import importlib
+import importlib.util
 
 @vc
 def _plot_fastq_layout_20230105(i, n=10000, title=None):
