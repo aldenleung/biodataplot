@@ -7,7 +7,7 @@ requirements = ["genomictools>=0.0.8", "biodata>=0.1.4", "simplevc>=0.0.3", "com
 
 setup(
 	name="biodataplot",
-	version="0.0.2",
+	version="0.0.4",
 	author="Alden Leung",
 	author_email="alden.leung@gmail.com",
 	description="A python package with useful biological data plotting methods",

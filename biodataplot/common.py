@@ -168,6 +168,8 @@ def _plot_density_scatter_20240901(x, y, bins=20, ax=None, **kwargs)   :
 	
 	if ax is None :
 		fig, ax = plt.subplots()
+# 	else:
+# 		fig = ax.figure
 	x = np.array(x)
 	y = np.array(y)
 	data, x_e, y_e = np.histogram2d(x, y, bins = bins, density = True)
@@ -184,9 +186,9 @@ def _plot_density_scatter_20240901(x, y, bins=20, ax=None, **kwargs)   :
 
 	ax.scatter( x, y, c=z, **kwargs )
 
-	norm = Normalize(vmin = np.min(z), vmax = np.max(z))
-	cbar = fig.colorbar(cm.ScalarMappable(norm = norm), ax=ax)
-	cbar.ax.set_ylabel('Density')
+# 	norm = Normalize(vmin = np.min(z), vmax = np.max(z))
+# 	cbar = fig.colorbar(cm.ScalarMappable(norm = norm), ax=ax)
+# 	cbar.ax.set_ylabel('Density')
 
 	return ax
 @vc
