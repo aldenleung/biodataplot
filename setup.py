@@ -3,11 +3,11 @@ from setuptools import setup, find_packages
 with open("README.md", "r") as readme_file:
 	readme = readme_file.read()
 
-requirements = ["genomictools>=0.0.8", "biodata>=0.1.4", "simplevc>=0.0.3", "commonhelper>=0.0.5", "mphelper>=0.0.3", "numpy>=1.26.4", "scipy>=1.13.1", "matplotlib>=3.9.2"]
+requirements = ["genomictools>=0.0.8", "biodata>=0.1.6", "simplevc>=0.0.4", "commonhelper>=0.0.5", "mphelper>=0.0.3", "numpy>=1.26.4", "scipy>=1.13.1", "matplotlib>=3.9.2"]
 
 setup(
 	name="biodataplot",
-	version="0.0.4",
+	version="0.0.5",
 	author="Alden Leung",
 	author_email="alden.leung@gmail.com",
 	description="A python package with useful biological data plotting methods",

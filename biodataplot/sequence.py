@@ -4,6 +4,7 @@ simplevc.register(sys.modules[__name__])
 
 import importlib.util
 
+
 @vc
 def _plot_fastq_layout_20230105(i, n=10000, title=None):
 	if any(importlib.util.find_spec(p) is None for p in ["pandas", "logomaker"]):

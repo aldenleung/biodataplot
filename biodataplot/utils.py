@@ -435,6 +435,111 @@ def _plt_change_figure_properties_20240501(fig, *, fig_prop={}, fig_suptitle=Non
 	elif fig._supylabel is not None:
 		fig._supylabel.set(**fig_supylabel_prop)
 		
+@vc
+def _format_pvalue_20241210(p, method="exact"):
+	'''
+	Formats the pvalue to $p=0.0333$ or $p=0.0333$
+	
+	:Example:
+	
+	.. code-block:: python
+	
+		import pipe.methods as pm
+		p = 0.1234
+		for _ in range(5):
+			print(pm.format_pvalue(p))
+			p /= 10
+		
+		# $p=0.123$
+		# $p=0.0123$
+		# $p=0.00123$
+		# $p=1.23\\times 10^{-4}$
+		# $p=1.23\\times 10^{-5}$
+
+	'''
+	import re
+	if method == "exact":
+		if p == 0:
+			pstr="0.000"
+		elif 0 < p < 0.001:
+			match = re.match("^(-?[0-9]\\.[0-9][0-9])e([+-]?[0-9]+)$", f"{p:.2e}")
+			pstr = match.group(1) + "\\times 10^{" + str(int(match.group(2))) + "}"	
+		elif 0.001 <= p < 0.01:
+			pstr = f"{p:.5f}"
+		elif 0.01 <= p < 0.1:
+			pstr = f"{p:.4f}"
+		elif 0.1 <= p < 0.9995:
+			pstr = f"{p:.3f}"
+		else:
+			pstr = "1.00"
+		return f"$p={pstr}$"
+	elif method == "symbol":
+		if p >= 0.05:
+			pstr = "n.s."
+		elif p >= 0.01:
+			pstr = "*"
+		elif p >= 0.001:
+			pstr = "**"
+		else:
+			pstr = "***"
+		return pstr
+	else:
+		raise Exception()
+			
+@vc
+def _format_pvalue_20250201(p, method="exact"):
+	'''
+	Formats the pvalue to $p=0.0333$ or $p=0.0333$
+	
+	:Example:
+	
+	.. code-block:: python
+	
+		import pipe.methods as pm
+		p = 0.1234
+		for _ in range(5):
+			print(pm.format_pvalue(p))
+			p /= 10
+		
+		# $p=0.123$
+		# $p=0.0123$
+		# $p=0.00123$
+		# $p=1.23\\times 10^{-4}$
+		# $p=1.23\\times 10^{-5}$
+
+	'''
+	import re
+	if np.isnan(p):
+		return f"$NA$"
+	if method == "exact":
+		if p == 0:
+			pstr="0.000"
+		elif 0 < p < 0.001:
+			match = re.match("^(-?[0-9]\\.[0-9][0-9])e([+-]?[0-9]+)$", f"{p:.2e}")
+			pstr = match.group(1) + "\\times 10^{" + str(int(match.group(2))) + "}"	
+		elif 0.001 <= p < 0.01:
+			pstr = f"{p:.5f}"
+		elif 0.01 <= p < 0.1:
+			pstr = f"{p:.4f}"
+		elif 0.1 <= p < 0.9995:
+			pstr = f"{p:.3f}"
+		else:
+			pstr = "1.00"
+		return f"$p={pstr}$"
+	elif method == "symbol":
+		if p >= 0.05:
+			pstr = "n.s."
+		elif p >= 0.01:
+			pstr = "*"
+		elif p >= 0.001:
+			pstr = "**"
+		else:
+			pstr = "***"
+		return pstr
+	else:
+		raise Exception()
+		
+		
 @vc		
 def _compose_SVG_panel_20221231(data, w=None, h=None, cols=None, rows=None, output=None, save_fig_kw={}, text_kw={}, text_height=12):
 	'''
@@ -564,6 +669,136 @@ def _compose_SVG_panel_20221231(data, w=None, h=None, cols=None, rows=None, outp
 
 
 
+@vc		
+def _compose_SVG_panel_20241022(data, w=None, h=None, cols=None, rows=None, output=None, save_fig_kw={}, text_kw={}, text_height=12):
+	'''
+	Make use of svgutils, this method allows merging of multiple matplotlib.figure.Figure or SVG file into a single SVG file
+	
+	'''
+	try:
+		from svgutils.compose import Figure, Panel, Text, SVG 
+		from lxml import etree 
+	except:
+		raise Exception("compose_SVG_panel requires svgutils and lxml packages")
+	
+	if w is None and h is None:
+		raise Exception("You must provide either w or h")
+	if len(data) == 0:
+		raise Exception("Empty data")
+	
+	def convert(s):
+		pt_pattern = re.compile("^([0-9]+(?:[.][0-9]+)?)pt$")
+		return float(pt_pattern.match(s).group(1))
+	svgfiles = []
+	tmp_svgfiles = [] # This is temporary storage from fig
+	if isinstance(data, dict):
+		datakeys = list(data.keys())
+		data = list(data.values())
+	else:
+		datakeys = None
+	for d in data:
+		if isinstance(d, str) or isinstance(d, io.IOBase):
+			svgfiles.append(d)
+		elif isinstance(d, matplotlib.figure.Figure):
+			filename = tempfile.NamedTemporaryFile(mode='w+', suffix=".svg", delete=False).name
+			d.savefig(filename, **save_fig_kw)
+			svgfiles.append(filename)
+			tmp_svgfiles.append(filename) 
+		elif d is None:
+			svgfiles.append(None)
+		else:
+			raise Exception("Unknown data type")
+		
+	if rows is None:
+		rows = (len(svgfiles) + cols - 1) // cols
+	
+	text_kw = {**text_kw}
+	row_ys = {0:0}
+	row_max_heights = defaultdict(int)
+	panels = []
+	for idx, svgfile in enumerate(svgfiles):
+		if svgfile is None:
+			continue
+		if isinstance(svgfile, str):
+			f = open(svgfile, "rb")
+		else:
+			f = svgfile
+		s = f.read()
+		if isinstance(svgfile, str):
+			f.close()
+		e = etree.fromstring(s)
+		attrib = e.attrib
+		width, height = convert(attrib["width"]), convert(attrib["height"])
+		row_idx = idx // cols
+		col_idx = idx % cols
+		
+		# Get y
+		if h is None:
+			if row_idx not in row_ys:
+				row_ys[row_idx] = row_ys[row_idx - 1] + row_max_heights[row_idx - 1] + (text_height if datakeys is not None else 0)
+			y = row_ys[row_idx]
+		else:
+			y = h / rows * row_idx
+		
+		# Get scales
+		scales = []
+		if w is not None: 
+			scales.append(w / cols / width)
+		if h is not None: 
+			if datakeys is not None:
+				scales.append((h / rows - text_height) / height)
+			else:
+				scales.append(h / rows / height)
+		scale = min(scales)
+		row_max_heights[row_idx] = max(row_max_heights[row_idx], height * scale)
+# 		element = Element(e).scale(scale)
+# 		panels.append(Panel(element.scale(scale)).move(w / cols * col_idx, y))
+# There is no way I can use Element instead of SVG for scaling. svgutils behavior. 
+		if isinstance(svgfile, str):
+			svginstance = SVG(svgfile)
+		else:
+			tmp = tempfile.NamedTemporaryFile(mode='w+', suffix=".svg", delete=False).name
+			with open(tmp, 'wb') as tmpw:
+				tmpw.write(s)
+			svginstance = SVG(tmp)
+			os.unlink(tmp)
+		if datakeys is not None:
+			textinstance = Text(datakeys[idx], 0, text_height, **text_kw)
+			panelinstance = Panel(svginstance.scale(scale).move(0, text_height), textinstance).move(w / cols * col_idx, y)
+		else:
+			panelinstance =  Panel(svginstance.scale(scale)).move(w / cols * col_idx, y)
+		panels.append(
+			panelinstance
+		)
+	
+	if h is None:
+		if row_idx not in row_ys:
+			row_ys[row_idx] = row_ys[row_idx - 1] + row_max_heights[row_idx - 1]
+		h = row_ys[row_idx] + row_max_heights[row_idx] + ((row_idx + 1) * text_height if datakeys is not None else 0)
+	figure = Figure(w, h, *panels)
+	
+	if output is not None:
+		
+		if output.lower().endswith(".svg"):
+			figure.save(output)
+		else:
+			try:
+				import cairosvg
+			except:
+				raise Exception("Saving to PDF, PNG or PS requires cairosvg")
+			tmpfile = tempfile.NamedTemporaryFile(mode='w+', suffix=".svg", delete=False).name
+			figure.save(tmpfile)
+			
+			if output.lower().endswith(".pdf"):
+				cairosvg.svg2pdf(url=tmpfile, write_to=output)
+			elif output.lower().endswith(".png"):
+				cairosvg.svg2png(url=tmpfile, write_to=output)
+			elif output.lower().endswith(".ps"):
+				cairosvg.svg2ps(url=tmpfile, write_to=output)
+			os.unlink(tmpfile)
+	for filename in tmp_svgfiles:
+		os.unlink(filename)
+	return figure		
 
 
 
